@@ -154,18 +154,22 @@ defmodule Instructor.Adapters.OpenAI do
        do: Jason.decode(args)
 
   defp parse_response_for_mode(:md_json, %{"choices" => [%{"message" => %{"content" => content}}]}),
-       do: Jason.decode(content)
+       do: decode_message_content(content)
 
   defp parse_response_for_mode(:json, %{"choices" => [%{"message" => %{"content" => content}}]}),
-    do: Jason.decode(content)
+    do: decode_message_content(content)
 
   defp parse_response_for_mode(:json_schema, %{
          "choices" => [%{"message" => %{"content" => content}}]
        }),
-       do: Jason.decode(content)
+       do: decode_message_content(content)
 
   defp parse_response_for_mode(mode, response) do
     {:error, "Unsupported OpenAI mode #{mode} with response #{inspect(response)}"}
+  end
+
+  defp decode_message_content(content) do
+    Instructor.JsonFixer.run(content)
   end
 
   defp parse_stream_chunk_for_mode(:md_json, %{"choices" => [%{"delta" => %{"content" => chunk}}]}),
