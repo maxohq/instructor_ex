@@ -109,18 +109,6 @@ is_spam?.("Hello I am a Nigerian prince and I would like to send you money")
 
 <!-- Docs -->
 
-## Installation
-
-In your mix.exs,
-
-```elixir
-def deps do
-  [
-    {:instructor, "~> 0.1.0"}
-  ]
-end
-```
-
 ## HTTP Communication Hooks
 
 Instructor provides a flexible way to customize HTTP requests and responses globally using hooks. This is useful for logging, instrumentation, modifying requests, or handling responses in a consistent way across your application.
@@ -171,3 +159,16 @@ config :instructor, Instructor.HttpClient,
 - `Instructor.HttpClient.register_response_hook((response, options -> response))`
 
 See the [source code](lib/instructor/http_client.ex) and tests for more advanced usage.
+
+
+## Installation
+
+In your mix.exs,
+
+```elixir
+def deps do
+  [
+    {:instructor, "~> 0.1.0"}
+  ]
+end
+```
