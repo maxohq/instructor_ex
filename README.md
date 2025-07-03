@@ -133,38 +133,41 @@ You can register global request and response hooks using the `Instructor.HttpCli
 
 ```elixir
 defmodule MyLogger do
-  def log_request(request) do
-    IO.inspect(request, label: "Outgoing HTTP Request")
+  def log_request(request, options) do
+    IO.inspect({request, options}, label: "Outgoing HTTP Request")
     request
   end
 
-  def log_response(response) do
-    IO.inspect(response, label: "Incoming HTTP Response")
+  def log_response(response, options) do
+    IO.inspect({response, options}, label: "Incoming HTTP Response")
     response
   end
 end
 
 # Register hooks at application startup (e.g., in your Application start/2)
-Instructor.HttpClient.register_request_hook(&MyLogger.log_request/1)
-Instructor.HttpClient.register_response_hook(&MyLogger.log_response/1)
+Instructor.HttpClient.register_request_hook(&MyLogger.log_request/2)
+Instructor.HttpClient.register_response_hook(&MyLogger.log_response/2)
 
 
 ### You can also set global hooks in your `config/config.exs`:
 config :instructor, Instructor.HttpClient,
-  request_hooks: [&MyLogger.log_request/1],
-  response_hooks: [&MyLogger.log_response/1]
+  request_hooks: [&MyLogger.log_request/2],
+  response_hooks: [&MyLogger.log_response/2]
 ```
 
 ### How Hooks Work
-- **Request hooks** are called before the HTTP request is sent. You can modify the request or just observe it.
-- **Response hooks** are called after the HTTP response is received. You can modify or log the response.
+- **Request hooks** are called before the HTTP request is sent. You can modify the request or just observe it. Hooks receive both the request and the options.
+- **Response hooks** are called after the HTTP response is received. You can modify or log the response. Hooks receive both the response and the options.
 - Multiple hooks can be registered; they are called in the order they were registered.
 
 ### Use Cases
 - Logging all HTTP traffic
 - Adding custom headers or authentication
 - Instrumentation and metrics
+- Response validation or transformation
 
 ### API Reference
-- `Instructor.HttpClient.register_request_hook((request -> request))`
-- `Instructor.HttpClient.register_response_hook((response -> response))`
+- `Instructor.HttpClient.register_request_hook((request, options -> request))`
+- `Instructor.HttpClient.register_response_hook((response, options -> response))`
+
+See the [source code](lib/instructor/http_client.ex) and tests for more advanced usage.

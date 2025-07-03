@@ -7,18 +7,18 @@ defmodule Instructor.HttpClient do
   @config_key __MODULE__
 
   @doc """
-  Register a global request hook. The hook should be a function (request -> request).
+  Register a global request hook. The hook should be a function (request, options -> request).
   """
-  def register_request_hook(hook_fun) when is_function(hook_fun, 1) do
+  def register_request_hook(hook_fun) when is_function(hook_fun, 2) do
     hooks = get_request_hooks() ++ [hook_fun]
     put_request_hooks(hooks)
     :ok
   end
 
   @doc """
-  Register a global response hook. The hook should be a function (response -> response).
+  Register a global response hook. The hook should be a function (response, options -> response).
   """
-  def register_response_hook(hook_fun) when is_function(hook_fun, 1) do
+  def register_response_hook(hook_fun) when is_function(hook_fun, 2) do
     hooks = get_response_hooks() ++ [hook_fun]
     put_response_hooks(hooks)
     :ok
@@ -28,21 +28,21 @@ defmodule Instructor.HttpClient do
   Get a resource from the given URL, applying global hooks.
   """
   def get(request, options \\ []) do
-    request = apply_request_hooks(request)
+    request = apply_request_hooks(request, options)
     response = Req.get(request, options)
-    apply_response_hooks(response)
+    apply_response_hooks(response, options)
   end
 
   def post(request, options \\ []) do
-    request = apply_request_hooks(request)
+    request = apply_request_hooks(request, options)
     response = Req.post(request, options)
-    apply_response_hooks(response)
+    apply_response_hooks(response, options)
   end
 
   def post!(request, options \\ []) do
-    request = apply_request_hooks(request)
+    request = apply_request_hooks(request, options)
     response = Req.post!(request, options)
-    apply_response_hooks(response)
+    apply_response_hooks(response, options)
   end
 
   # Internal helpers
@@ -64,11 +64,11 @@ defmodule Instructor.HttpClient do
     Application.put_env(@app, @config_key, Keyword.put(config, :response_hooks, hooks))
   end
 
-  defp apply_request_hooks(request) do
-    Enum.reduce(get_request_hooks(), request, fn hook, acc -> hook.(acc) end)
+  defp apply_request_hooks(request, options) do
+    Enum.reduce(get_request_hooks(), request, fn hook, acc -> hook.(acc, options) end)
   end
 
-  defp apply_response_hooks(response) do
-    Enum.reduce(get_response_hooks(), response, fn hook, acc -> hook.(acc) end)
+  defp apply_response_hooks(response, options) do
+    Enum.reduce(get_response_hooks(), response, fn hook, acc -> hook.(acc, options) end)
   end
 end
