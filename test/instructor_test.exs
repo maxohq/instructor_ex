@@ -43,7 +43,11 @@ defmodule InstructorTest do
 
       :openai_mock ->
         Application.put_env(:instructor, :adapter, InstructorTest.MockOpenAI)
+
+      _ ->
+        :ok
     end
+    :ok
   end
 
   def mock_response(:openai_mock, mode, expected) do
@@ -528,6 +532,54 @@ defmodule InstructorTest do
 
       assert [ok: %{name: "Thomas"}, ok: %{name: "Jason"}] =
                result |> Enum.to_list()
+    end
+  end
+
+  describe "Instructor.HttpClient global hooks" do
+    setup do
+      # Clear hooks before each test
+      Application.put_env(:instructor, Instructor.HttpClient, request_hooks: [], response_hooks: [])
+      :ok
+    end
+
+    test "request hooks are called and can modify the request" do
+      Instructor.HttpClient.register_request_hook(fn req -> Map.put(req, :test_marker, true) end)
+      # We'll use a mock for Req.get/2
+      Req = Module.concat([:Req])
+      :meck.new(Req, [:passthrough])
+      :meck.expect(Req, :get, fn req, _opts -> req end)
+
+      result = Instructor.HttpClient.get(%{url: "http://example.com"})
+      assert result[:test_marker] == true
+      :meck.unload(Req)
+    end
+
+    test "response hooks are called and can modify the response" do
+      Instructor.HttpClient.register_response_hook(fn resp -> Map.put(resp, :response_marker, 123) end)
+      Req = Module.concat([:Req])
+      :meck.new(Req, [:passthrough])
+      :meck.expect(Req, :get, fn req, _opts -> %{original: req} end)
+
+      result = Instructor.HttpClient.get(%{url: "http://example.com"})
+      assert result[:response_marker] == 123
+      :meck.unload(Req)
+    end
+
+    test "multiple hooks are composed in order" do
+      Instructor.HttpClient.register_request_hook(fn req -> Map.put(req, :a, 1) end)
+      Instructor.HttpClient.register_request_hook(fn req -> Map.put(req, :b, 2) end)
+      Instructor.HttpClient.register_response_hook(fn resp -> Map.put(resp, :c, 3) end)
+      Instructor.HttpClient.register_response_hook(fn resp -> Map.put(resp, :d, 4) end)
+      Req = Module.concat([:Req])
+      :meck.new(Req, [:passthrough])
+      :meck.expect(Req, :get, fn req, _opts -> req end)
+
+      result = Instructor.HttpClient.get(%{})
+      assert result[:a] == 1
+      assert result[:b] == 2
+      assert result[:c] == 3
+      assert result[:d] == 4
+      :meck.unload(Req)
     end
   end
 end

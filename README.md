@@ -120,3 +120,51 @@ def deps do
   ]
 end
 ```
+
+## HTTP Communication Hooks
+
+Instructor provides a flexible way to customize HTTP requests and responses globally using hooks. This is useful for logging, instrumentation, modifying requests, or handling responses in a consistent way across your application.
+
+### Registering Global Hooks
+
+You can register global request and response hooks using the `Instructor.HttpClient` module. Hooks are functions that receive and return the request or response. All HTTP requests made by Instructor will pass through these hooks.
+
+#### Example: Logging Requests and Responses
+
+```elixir
+defmodule MyLogger do
+  def log_request(request) do
+    IO.inspect(request, label: "Outgoing HTTP Request")
+    request
+  end
+
+  def log_response(response) do
+    IO.inspect(response, label: "Incoming HTTP Response")
+    response
+  end
+end
+
+# Register hooks at application startup (e.g., in your Application start/2)
+Instructor.HttpClient.register_request_hook(&MyLogger.log_request/1)
+Instructor.HttpClient.register_response_hook(&MyLogger.log_response/1)
+
+
+### You can also set global hooks in your `config/config.exs`:
+config :instructor, Instructor.HttpClient,
+  request_hooks: [&MyLogger.log_request/1],
+  response_hooks: [&MyLogger.log_response/1]
+```
+
+### How Hooks Work
+- **Request hooks** are called before the HTTP request is sent. You can modify the request or just observe it.
+- **Response hooks** are called after the HTTP response is received. You can modify or log the response.
+- Multiple hooks can be registered; they are called in the order they were registered.
+
+### Use Cases
+- Logging all HTTP traffic
+- Adding custom headers or authentication
+- Instrumentation and metrics
+
+### API Reference
+- `Instructor.HttpClient.register_request_hook((request -> request))`
+- `Instructor.HttpClient.register_response_hook((response -> response))`
