@@ -67,7 +67,9 @@ defmodule Instructor.Adapters.Anthropic do
     reask_messages_for_mode(params[:mode], raw_response)
   end
 
-  defp reask_messages_for_mode(:tools, %{"content" => [%{"input" => args, "type" => "tool_use", "id" => id, "name" => name}]}) do
+  defp reask_messages_for_mode(:tools, %{
+         "content" => [%{"input" => args, "type" => "tool_use", "id" => id, "name" => name}]
+       }) do
     [
       %{
         role: "assistant",
@@ -100,7 +102,7 @@ defmodule Instructor.Adapters.Anthropic do
   defp do_chat_completion(mode, params, config) do
     options = get_anthropic_http_opts(config) |> Keyword.merge(json: params)
 
-    case Req.post(url(config), options) do
+    case Instructor.HttpClient.post(url(config), options) do
       {:ok, %Req.Response{status: 200, body: body} = response} ->
         {:ok, response, parse_response_for_mode(mode, body)}
 
@@ -127,7 +129,7 @@ defmodule Instructor.Adapters.Anthropic do
               end
             )
 
-          Req.post!(url(config), options)
+          Instructor.HttpClient.post!(url(config), options)
           send(pid, :done)
         end)
       end,

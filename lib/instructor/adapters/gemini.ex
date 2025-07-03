@@ -187,7 +187,7 @@ defmodule Instructor.Adapters.Gemini do
             )
 
           Req.merge(gemini_req(), options)
-          |> Req.post!()
+          |> Instructor.HttpClient.post!()
 
           send(pid, :done)
         end)
@@ -215,7 +215,7 @@ defmodule Instructor.Adapters.Gemini do
 
     response =
       Req.merge(gemini_req(), http_options(config))
-      |> Req.post(
+      |> Instructor.HttpClient.post(
         url: url(config),
         path_params: [model: model, api_version: api_version(config)],
         headers: %{"x-goog-api-key" => api_key(config)},

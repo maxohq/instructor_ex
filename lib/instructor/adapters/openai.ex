@@ -108,7 +108,7 @@ defmodule Instructor.Adapters.OpenAI do
               end
             ])
 
-          Req.post(url(config), options)
+          Instructor.HttpClient.post(url(config), options)
           send(pid, {ref, :done})
         end)
       end,
@@ -134,7 +134,7 @@ defmodule Instructor.Adapters.OpenAI do
     options = Keyword.merge(http_options(config), [auth_header(config), json: params])
 
     with {:ok, %Req.Response{status: 200, body: body} = response} <-
-           Req.post(url(config), options),
+           Instructor.HttpClient.post(url(config), options),
          {:ok, content} <- parse_response_for_mode(mode, body) do
       {:ok, response, content}
     else
